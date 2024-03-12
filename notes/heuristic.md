@@ -12,5 +12,5 @@
 
 **Duplication/Duplication Cost $(t_{dup}(T_1, T_2))$:** The number of "duplicated" nodes under the mapping $M: T_1\rightarrow T_2$. A node $x\in T_1$ is said to be "duplicated" iff there is some child of $x$, call it $c$, such that $M(c) = M(x)$. In plain English, duplication describes when the child of a gene (in a gene tree) occurs in the same species as the parent gene _(can someone verify?)_.
 
-**Symmetric Duplication Cost:** A measure defined on full binary trees (the set $T$ of full binary trees and $d(.,.)$ form a metric space). Defined in the paper as 
+**Symmetric Duplication Cost:** A measure defined on full binary trees (the set $T$ of full binary trees, equipped with $d(.,.)$, forms a metric space). Defined in the paper as 
 $$\frac{t_{dup}(T_1, T_2) + t_{dup}(T_2, T_1)}{2}.$$
