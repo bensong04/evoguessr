@@ -49,7 +49,7 @@ def run_test(test_no: int, test_fn: Callable[[str], Any], log: logging.Logger, i
     return not failure
 
 def create_and_print_tree(j: str):
-    t = gtrees.Tree(j)
+    t = gtrees.GeneTree(j)
     print(t)
 
 if __name__ == "__main__":
