@@ -106,3 +106,49 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+"""
+# SPR code using builtin method
+for i in range(num_iterations):
+	# Make a copy of the current tree
+	tree_copy = best_tree.clone()
+
+	# Perform a random SPR operation on the copy
+	tree_copy.spr_prune_regraft_random()
+
+	# Calculate the metric for the new tree
+	new_metric = metric(tree_copy)
+
+	# If the new tree is better, update the best tree and metric
+	if new_metric < best_metric:
+		best_tree = tree_copy
+		best_metric = new_metric
+"""
+
+"""
+# NNI code using builtin method
+for i in range(num_iterations):
+	# Make a copy of the current tree
+	tree_copy = best_tree.clone()
+
+	# Perform a random NNI operation on the copy
+	tree_copy.nniswap_random()
+
+	# Calculate the metric for the new tree
+	new_metric = metric(tree_copy)
+
+	# If the new tree is better, update the best tree and metric
+	if new_metric < best_metric:
+		best_tree = tree_copy
+		best_metric = new_metri
+"""
+
+"""
+Search Paradigm Variations
+1. keep best n results as starting tree (total symmetric cost) instead of 1
+2. ALternate NNI, SPR, iterate when we see improvement
+4. Do NNI only
+5. Do SPR only
+6. The Kashtan-Alon Algorithm as higher architecture
+7. Incorporate randomness to allow for exploration
+"""
