@@ -84,20 +84,43 @@ def perform_nni(species_tree, gene_trees):
     temp_tree = species_tree.copy()
     best_tree = species_tree
 
+    count = 0
     # Traverse internal nodes excluding the root, and perform NNI
-    for node in temp_tree.traverse("levelorder"):
-        if not node.is_leaf() and not node.is_root() and len(node.children) == 2:
-            # Perform the swap of children
-            node.swap_children()
+    for nodei in temp_tree.traverse("levelorder"):
+        if not nodei.is_leaf() and not nodei.is_root() and len(nodei.children) == 2:
+            for nodej in temp_tree.traverse("levelorder"):
+                if not nodej.is_leaf() and not nodej.is_root() and len(nodej.children) == 2 and nodej != nodei:
+                    nodei_ancestors = nodei.get_ancestors()
+                    nodej_ancestors = nodej.get_ancestors()
 
-            # Evaluate cost after swap
-            nni_cost = sum(symm_duplication_cost(temp_tree, gt)
-                           for gt in gene_trees)
-            if nni_cost < best_cost:
-                best_cost = nni_cost
-                best_tree = temp_tree.copy()
+                    if nodei in nodej_ancestors or nodej in nodei_ancestors:
+                        continue
 
-            node.swap_children()
+                    # Perform the swap of children
+                    c1 = nodei.children[0]
+                    c2 = nodej.children[0]
+
+                    c1.detach()
+                    c2.detach()
+                    nodei.add_child(c2)
+                    nodej.add_child(c1)
+
+                    # Evaluate cost after swap
+                    nni_cost = sum(symm_duplication_cost(temp_tree, gt)
+                                   for gt in gene_trees)
+                    if nni_cost <= best_cost:
+                        print("improved")
+                        best_cost = nni_cost
+                        best_tree = temp_tree.copy()
+
+                    # undo
+                    c1 = nodei.children[1]
+                    c2 = nodej.children[1]
+                    c1.detach()
+                    c2.detach()
+                    nodei.add_child(c2)
+                    nodej.add_child(c1)
+
     return best_tree, best_cost
 
 
@@ -144,7 +167,6 @@ def main():
     for _ in range(5):
         species_tree, cost = perform_nni(species_tree, gene_trees)
         species_tree, cost = perform_spr(species_tree, gene_trees)
-        species_tree.show()
         print("Cost:", cost)
 
 
