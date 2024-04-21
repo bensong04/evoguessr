@@ -96,7 +96,7 @@ def initial_species_tree(gene_trees):
     return min(distances, key=distances.get)
 
 
-def perform_cha(species_tree, gene_trees):
+def perform_subtreeSwap(species_tree, gene_trees):
     best_cost = sum(symm_duplication_cost(species_tree, gt)
                     for gt in gene_trees)
     temp_tree = species_tree.copy()
@@ -123,11 +123,10 @@ def perform_cha(species_tree, gene_trees):
                     nodej.add_child(c1)
 
                     # Evaluate cost after swap
-                    nni_cost = sum(symm_duplication_cost(temp_tree, gt)
-                                   for gt in gene_trees)
-                    if nni_cost < best_cost:
-                        print("nni", nni_cost)
-                        best_cost = nni_cost
+                    cost = sum(symm_duplication_cost(temp_tree, gt)
+                               for gt in gene_trees)
+                    if cost < best_cost:
+                        best_cost = cost
                         best_tree = temp_tree.copy()
 
                     # undo
@@ -137,6 +136,50 @@ def perform_cha(species_tree, gene_trees):
                     c2.detach()
                     nodei.add_child(c2)
                     nodej.add_child(c1)
+
+    return best_tree, best_cost
+
+
+def is_internal_node(tree_node):  # only nodes whose children are also nonleaves
+    return not tree_node.is_leaf()
+
+
+def perform_nni(species_tree, gene_trees):
+    best_cost = sum(symm_duplication_cost(species_tree, gt)
+                    for gt in gene_trees)
+    best_tree = species_tree
+
+    all_nodes = list(species_tree.traverse())
+    nni_trees = list()
+    internal_nodes = filter(is_internal_node, all_nodes)
+    for A in internal_nodes:
+        adj_nodes = A.get_children()
+        adj_internal_nodes = [
+            node for node in adj_nodes if node in internal_nodes]
+        for B in adj_internal_nodes:
+            A_children = list(A.get_children())
+            A_children.remove(B)
+            B_children = list(B.get_children())
+            for a_child in A_children:
+                for b_child in B_children:
+
+                    a_child.detach()
+                    b_child.detach()
+                    A.add_child(b_child)
+                    B.add_child(a_child)
+                    nni_trees.append(species_tree.copy("deepcopy"))
+                    a_child.detach()
+                    b_child.detach()
+                    A.add_child(a_child)
+                    B.add_child(b_child)
+
+    for tree in nni_trees:
+        cost = sum(symm_duplication_cost(tree, gt)
+                   for gt in gene_trees)
+        if cost < best_cost:
+            print("nni", cost)
+            best_cost = cost
+            best_tree = tree
 
     return best_tree, best_cost
 
@@ -164,8 +207,6 @@ def perform_spr(species_tree, gene_trees):
                     current_cost = sum(symm_duplication_cost(temp_tree, gt)
                                        for gt in gene_trees)
                     if current_cost < best_cost:
-                        print("spr", current_cost)
-
                         best_cost = current_cost
                         # If better, keep this configuration
                         best_tree = temp_tree.copy()
@@ -188,11 +229,9 @@ def main():
     gene_trees = load_gene_trees("src/trees")
     species_tree = initial_species_tree(gene_trees)
     species_tree = randomTree(species_tree.get_leaf_names())
-    species_tree.show()
     for _ in range(5):
-        species_tree, cost = perform_cha(species_tree, gene_trees)
-        species_tree, cost = perform_spr(species_tree, gene_trees)
-        species_tree.show()
+        species_tree, cost = perform_nni(species_tree, gene_trees)
+        # species_tree, cost = perform_spr(species_tree, gene_trees)
         print("Cost:", cost)
 
 
