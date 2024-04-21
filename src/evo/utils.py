@@ -52,24 +52,31 @@ def load_gene_trees(path):
 def duplication_cost(species_tree, gene_tree):
     lca_map = {}
     duplication_cost = 0
-    for node in gene_tree.traverse():
-        if node.is_leaf():
-            lca_map[node] = species_tree.get_leaves_by_name(
-                node.name)[0]
+    leaf_names = species_tree.get_leaf_names()
+    try:
+        for node in gene_tree.traverse():
+            if node.is_leaf():
+                lca_map[node] = species_tree.search_nodes(
+                    name=node.name)[0]
+                continue
 
-        leaves = node.get_leaves()
-        leaf_labels = []
-        for leaf in leaves:
-            name = leaf.name
-            try:
+            leaves = node.get_leaves()
+            leaf_labels = []
+
+            for leaf in leaves:
+                name = leaf.name
+                if name not in leaf_names:
+                    continue
                 leaf_labels.append(species_tree.get_leaves_by_name(name)[0])
-            except Exception as e:
-                raise ValueError(name)
+            if len(leaf_labels) < 2:
+                continue
+            lca_node = species_tree.get_common_ancestor(leaf_labels)
+            lca_map[node] = lca_node
 
-        if len(leaf_labels) < 2:
-            continue
-        lca_node = species_tree.get_common_ancestor(leaf_labels)
-        lca_map[node] = lca_node
+    except Exception as e:
+        print(leaves)
+        species_tree.show()
+        raise e
 
     for node in gene_tree.traverse():
         if node not in lca_map or node.is_leaf():
@@ -128,7 +135,7 @@ def perform_subtreeSwap(species_tree, gene_trees):
                     if cost < best_cost:
                         best_cost = cost
                         best_tree = temp_tree.copy()
-
+                        return best_tree, best_cost
                     # undo
                     c1 = nodei.children[1]
                     c2 = nodej.children[1]
@@ -177,9 +184,9 @@ def perform_nni(species_tree, gene_trees):
         cost = sum(symm_duplication_cost(tree, gt)
                    for gt in gene_trees)
         if cost < best_cost:
-            print("nni", cost)
             best_cost = cost
             best_tree = tree
+            return best_tree, best_cost
 
     return best_tree, best_cost
 
@@ -208,8 +215,8 @@ def perform_spr(species_tree, gene_trees):
                                        for gt in gene_trees)
                     if current_cost < best_cost:
                         best_cost = current_cost
-                        # If better, keep this configuration
                         best_tree = temp_tree.copy()
+                        return best_tree, best_cost
 
                     # Remove the subtree to try the next regraft point
                     node.detach()
@@ -229,10 +236,15 @@ def main():
     gene_trees = load_gene_trees("src/trees")
     species_tree = initial_species_tree(gene_trees)
     species_tree = randomTree(species_tree.get_leaf_names())
-    for _ in range(5):
-        species_tree, cost = perform_nni(species_tree, gene_trees)
-        # species_tree, cost = perform_spr(species_tree, gene_trees)
-        print("Cost:", cost)
+    initial_cost = sum(symm_duplication_cost(species_tree, gt)
+                       for gt in gene_trees)
+    print("initial cost", initial_cost)
+    for _ in range(10):
+        tree = randomTree(species_tree.get_leaf_names())
+        for _ in range(8):
+            tree, cost = perform_subtreeSwap(tree, gene_trees)
+            tree, cost = perform_spr(tree, gene_trees)
+            print("Cost:", cost)
 
 
 if __name__ == "__main__":
