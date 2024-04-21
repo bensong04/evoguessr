@@ -64,8 +64,7 @@ def duplication_cost(species_tree, gene_tree):
             try:
                 leaf_labels.append(species_tree.get_leaves_by_name(name)[0])
             except Exception as e:
-                print(name)
-                species_tree.show()
+                raise ValueError(name)
 
         if len(leaf_labels) < 2:
             continue
@@ -97,7 +96,7 @@ def initial_species_tree(gene_trees):
     return min(distances, key=distances.get)
 
 
-def perform_nni(species_tree, gene_trees):
+def perform_cha(species_tree, gene_trees):
     best_cost = sum(symm_duplication_cost(species_tree, gt)
                     for gt in gene_trees)
     temp_tree = species_tree.copy()
@@ -188,7 +187,9 @@ def randomTree(labels):
 def main():
     gene_trees = load_gene_trees("src/trees")
     species_tree = initial_species_tree(gene_trees)
+
     species_tree = randomTree(species_tree.get_leaf_names())
+
     for _ in range(5):
         species_tree, cost = perform_nni(species_tree, gene_trees)
         species_tree, cost = perform_spr(species_tree, gene_trees)
