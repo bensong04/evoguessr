@@ -97,7 +97,7 @@ def initial_species_tree(gene_trees):
     return min(distances, key=distances.get)
 
 
-def perform_nni(species_tree, gene_trees):
+def perform_cha(species_tree, gene_trees):
     best_cost = sum(symm_duplication_cost(species_tree, gt)
                     for gt in gene_trees)
     temp_tree = species_tree.copy()
