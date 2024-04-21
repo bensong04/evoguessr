@@ -31,7 +31,13 @@ def random_from_gene_initial_species_tree(gene_trees, n):
 
 
 def random_true_initial_species_tree(gene_trees, n):
-    return randomTree(gene_trees[0].get_leaf_names())
+    if n == 1:
+        return randomTree(gene_trees[0].get_leaf_names())
+    else:
+        trees = []
+        for _ in range(n):
+            trees.append(randomTree(gene_trees[0].get_leaf_names()))
+        return trees
 
 # Search Functions (get cost with init trees)
 
@@ -99,7 +105,7 @@ def multipleInit(initf, searchf, g_t, n, m):
     init_tree_L = initf(g_t, n)
     costs = []
     for tri in init_tree_L:
-        costL = searchf(tri, g_t,)
+        costL = searchf(tri, g_t, m)
         costs.append(costL[-1])
 
     return min(costs)
