@@ -188,7 +188,9 @@ def randomTree(labels):
 def main():
     gene_trees = load_gene_trees("src/trees")
     species_tree = initial_species_tree(gene_trees)
+
     species_tree = randomTree(species_tree.get_leaf_names())
+
     for _ in range(5):
         species_tree, cost = perform_nni(species_tree, gene_trees)
         species_tree, cost = perform_spr(species_tree, gene_trees)
