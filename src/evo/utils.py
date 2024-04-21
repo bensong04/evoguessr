@@ -64,8 +64,7 @@ def duplication_cost(species_tree, gene_tree):
             try:
                 leaf_labels.append(species_tree.get_leaves_by_name(name)[0])
             except Exception as e:
-                print(name)
-                species_tree.show()
+                raise ValueError(name)
 
         if len(leaf_labels) < 2:
             continue
