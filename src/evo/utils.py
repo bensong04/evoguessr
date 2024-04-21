@@ -4,6 +4,7 @@ Defines various useful operations on gene/species trees.
 import dendropy
 import os
 import re
+import copy
 
 
 def extract_species(label):
@@ -60,8 +61,6 @@ def load_gene_trees(path):
 
 def duplication_cost(species_tree, gene_tree):
     """Map each node in gene tree to the LCA in the species tree, return duplication cost."""
-    species_tree.encode_bipartitions()
-    gene_tree.encode_bipartitions()
     lca_map = {}
     duplication_cost = 0
     for node in gene_tree:
@@ -100,45 +99,61 @@ def apply_nni(species_tree, gene_trees):
     best_cost = sum(symm_duplication_cost(species_tree, gt)
                     for gt in gene_trees)
     best_tree = species_tree.clone()
+    count = 0
     for edge in species_tree.internal_edges():
         if not edge.is_terminal() and edge.head_node and edge.tail_node:
             species_tree.reroot_at_edge(edge, update_bipartitions=True)
             nni_cost = sum(duplication_cost(species_tree, gt)
                            for gt in gene_trees)
+            count += 1
             if nni_cost < best_cost:
                 best_cost = nni_cost
                 best_tree = species_tree.clone()
             species_tree.reroot_at_edge(
                 edge, update_bipartitions=True)  # undo NNI
+    print(count)
     return best_tree, best_cost
 
 
-def apply_spr(species_tree, gene_trees):
-    """Apply Subtree Pruning and Regrafting (SPR) to improve the species tree.
-    This version updates the best tree at every step if a better one is found."""
+def perform_spr(species_tree, gene_trees):
+    """Apply Subtree Pruning and Regrafting (SPR) to improve the species tree."""
     best_cost = sum(symm_duplication_cost(species_tree, gt)
                     for gt in gene_trees)
-    best_tree = species_tree.clone()
+    best_tree = dendropy.Tree(species_tree)
+    count = 0
+    tempTree = dendropy.Tree(species_tree)
+    # Function to check if a node is the root or directly connected to the root
 
-    for edge in species_tree.internal_edges():
-        if edge.length is not None and edge.head_node:
-            # Temporarily prune the subtree at this edge
-            print(edge.head_node)
-            pruned_subtree, attachment_point = species_tree.prune_subtree(
-                edge.head_node)
-            # Try regrafting the pruned subtree at all possible points
-            for regraft_edge in species_tree.internal_edges():
-                if regraft_edge.head_node is not attachment_point:
-                    species_tree.regraft_subtree(
-                        pruned_subtree, regraft_edge.head_node)
-                    current_cost = duplication_cost(
-                        species_tree, gene_trees)
+    def is_connected_to_root(node, tree):
+        return node is tree.seed_node or node.parent_node is tree.seed_node
+
+    for prune_node in tempTree.nodes():
+        if prune_node.is_internal() and not is_connected_to_root(prune_node, tempTree):
+            parent_node = prune_node.parent_node
+            siblings = parent_node.child_nodes()
+            siblings.remove(prune_node)
+
+            # Temporarily remove the prune_node to test regraft locations
+            parent_node.remove_child(prune_node)
+
+            for regraft_node in tempTree.postorder_node_iter():
+                if regraft_node not in prune_node.ancestor_iter():
+                    regraft_node.add_child(prune_node)
+                    count += 1
+                    print(count, tempTree.as_string(schema="newick"))
+                    current_cost = sum(symm_duplication_cost(
+                        tempTree, gt) for gt in gene_trees)
                     if current_cost < best_cost:
                         best_cost = current_cost
-                        best_tree = species_tree.clone()
-                    # Undo the regraft to try next position
-                    species_tree.regraft_subtree(
-                        pruned_subtree, attachment_point)
+                        # Only create a new tree if it's actually better
+                        best_tree = dendropy.Tree(tempTree)
+                    # Revert changes to regraft location for next iteration
+                    regraft_node.remove_child(prune_node)
+
+            # Restore original parent connection after testing all regraft locations
+            parent_node.add_child(prune_node)
+
+    print("Total regraft attempts:", count)
     return best_tree, best_cost
 
 
@@ -149,7 +164,7 @@ def main():
 
     for _ in range(10):  # Iterate to refine the tree
         species_tree, cost = apply_nni(species_tree, gene_trees)
-        species_tree, cost = apply_spr(species_tree, gene_trees)
+        species_tree, cost = perform_spr(species_tree, gene_trees)
 
         print("Refined Species Tree:", species_tree.as_string(
             schema="newick"), "Cost:", cost)
