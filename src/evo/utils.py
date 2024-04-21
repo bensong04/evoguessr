@@ -54,13 +54,32 @@ def duplication_cost(species_tree, gene_tree):
     duplication_cost = 0
     for node in gene_tree.traverse():
         if node.is_leaf():
+            lca_map[node] = species_tree.get_leaves_by_name(
+                node.name)[0]
+
+        leaves = node.get_leaves()
+        leaf_labels = []
+        for leaf in leaves:
+            name = leaf.name
+            try:
+                leaf_labels.append(species_tree.get_leaves_by_name(name)[0])
+            except Exception as e:
+                print(name)
+                species_tree.show()
+
+        if len(leaf_labels) < 2:
             continue
-        leaf_labels = [leaf.name for leaf in node.iter_leaves()]
         lca_node = species_tree.get_common_ancestor(leaf_labels)
         lca_map[node] = lca_node
-        parent_lca = lca_map[node.up] if node.up else None
-        if parent_lca and parent_lca == lca_node:
-            duplication_cost += 1
+
+    for node in gene_tree.traverse():
+        if node not in lca_map or node.is_leaf():
+            continue
+        for child in node.children:
+            if child not in lca_map:
+                continue
+            if lca_map[child] == lca_map[node]:
+                duplication_cost += 1
     return duplication_cost
 
 
@@ -84,7 +103,6 @@ def perform_nni(species_tree, gene_trees):
     temp_tree = species_tree.copy()
     best_tree = species_tree
 
-    count = 0
     # Traverse internal nodes excluding the root, and perform NNI
     for nodei in temp_tree.traverse("levelorder"):
         if not nodei.is_leaf() and not nodei.is_root() and len(nodei.children) == 2:
@@ -108,8 +126,8 @@ def perform_nni(species_tree, gene_trees):
                     # Evaluate cost after swap
                     nni_cost = sum(symm_duplication_cost(temp_tree, gt)
                                    for gt in gene_trees)
-                    if nni_cost <= best_cost:
-                        print("improved")
+                    if nni_cost < best_cost:
+                        print("nni", nni_cost)
                         best_cost = nni_cost
                         best_tree = temp_tree.copy()
 
@@ -140,13 +158,15 @@ def perform_spr(species_tree, gene_trees):
 
             # Try regrafting the detached subtree at every possible point in the tree
             for potential_reattach in temp_tree.traverse("preorder"):
-                if potential_reattach not in node_ancestors and potential_reattach != node:
+                if potential_reattach not in node_ancestors and potential_reattach != node and not potential_reattach.is_leaf():
                     # Temporarily reattach the subtree
                     potential_reattach.add_child(node)
                     # Evaluate new tree configuration
                     current_cost = sum(symm_duplication_cost(temp_tree, gt)
                                        for gt in gene_trees)
                     if current_cost < best_cost:
+                        print("spr", current_cost)
+
                         best_cost = current_cost
                         # If better, keep this configuration
                         best_tree = temp_tree.copy()
@@ -159,11 +179,16 @@ def perform_spr(species_tree, gene_trees):
     return best_tree, best_cost
 
 
+def randomTree(labels):
+    t = Tree()
+    t.populate(10, names_library=labels)
+    return t
+
+
 def main():
     gene_trees = load_gene_trees("src/trees")
     species_tree = initial_species_tree(gene_trees)
-    print("Initial Species Tree:", species_tree.write(format=1))
-
+    species_tree = randomTree(species_tree.get_leaf_names())
     for _ in range(5):
         species_tree, cost = perform_nni(species_tree, gene_trees)
         species_tree, cost = perform_spr(species_tree, gene_trees)
