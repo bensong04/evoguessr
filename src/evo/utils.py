@@ -1,13 +1,61 @@
 """
 Defines various useful operations on gene/species trees.
 """
-from dendropy.calculate import treecompare
 import dendropy
+import os
+import re
+
+
+def extract_species(label):
+    match = re.search(r'OS=([^_]+_[^_]+)', label)
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
+def preprocess_newick_file(file_path):
+    # Read the entire content of the file
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+
+    # Process each line
+    processed_lines = []
+    for line in lines:
+        line = line.strip()
+        parts = re.split(r'(\(|\)|,)', line)
+        new_parts = []
+        for part in parts:
+            species = extract_species(part)
+            if species:
+                new_parts.append(species)
+            else:
+                new_parts.append(part)
+        # Join all parts to reform the Newick string
+        processed_line = ''.join(new_parts)
+        processed_lines.append(processed_line)
+
+    # Write the processed content back to the same file
+    with open(file_path, 'w') as f:
+        for line in processed_lines:
+            f.write(line + '\n')
 
 
 def load_gene_trees(path):
     """Load gene trees from a file."""
-    return dendropy.TreeList.get_from_path(path, schema="newick")
+
+    tree_list = dendropy.TreeList()
+    for filename in os.listdir(path):
+        if filename.endswith('.nwk'):  # Assuming tree files have ".tre" extension
+            file_path = os.path.join(path, filename)
+
+            preprocess_newick_file(file_path)
+
+            trees = dendropy.TreeList.get_from_path(
+                file_path, schema='newick')
+            tree_list.extend(trees)
+
+    return tree_list
 
 
 def duplication_cost(species_tree, gene_tree):
@@ -53,14 +101,15 @@ def apply_nni(species_tree, gene_trees):
                     for gt in gene_trees)
     best_tree = species_tree.clone()
     for edge in species_tree.internal_edges():
-        if not edge.is_terminal():
-            species_tree.reroot_at_edge(edge, update_splits=True)
+        if not edge.is_terminal() and edge.head_node and edge.tail_node:
+            species_tree.reroot_at_edge(edge, update_bipartitions=True)
             nni_cost = sum(duplication_cost(species_tree, gt)
                            for gt in gene_trees)
             if nni_cost < best_cost:
                 best_cost = nni_cost
                 best_tree = species_tree.clone()
-            species_tree.reroot_at_edge(edge, update_splits=True)  # undo NNI
+            species_tree.reroot_at_edge(
+                edge, update_bipartitions=True)  # undo NNI
     return best_tree, best_cost
 
 
@@ -72,8 +121,9 @@ def apply_spr(species_tree, gene_trees):
     best_tree = species_tree.clone()
 
     for edge in species_tree.internal_edges():
-        if edge.length is not None and edge.head_node is not None:
+        if edge.length is not None and edge.head_node:
             # Temporarily prune the subtree at this edge
+            print(edge.head_node)
             pruned_subtree, attachment_point = species_tree.prune_subtree(
                 edge.head_node)
             # Try regrafting the pruned subtree at all possible points
@@ -81,7 +131,8 @@ def apply_spr(species_tree, gene_trees):
                 if regraft_edge.head_node is not attachment_point:
                     species_tree.regraft_subtree(
                         pruned_subtree, regraft_edge.head_node)
-                    current_cost = duplication_cost(species_tree, gene_trees)
+                    current_cost = duplication_cost(
+                        species_tree, gene_trees)
                     if current_cost < best_cost:
                         best_cost = current_cost
                         best_tree = species_tree.clone()
@@ -92,7 +143,7 @@ def apply_spr(species_tree, gene_trees):
 
 
 def main():
-    gene_trees = load_gene_trees("Path")  # add path here
+    gene_trees = load_gene_trees("src/trees")  # add path here
     species_tree = initial_species_tree(gene_trees)
     print("Initial Species Tree:", species_tree.as_string(schema="newick"))
 
