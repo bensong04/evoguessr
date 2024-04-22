@@ -13,7 +13,7 @@ def randomTree(labels):
 # Init Functions (return init trees)
 
 
-def min_initial_species_tree(gene_trees, n):
+def min_initial_species_tree(gene_trees, n): # 1
     distances = {}
     for tree_i in gene_trees:
         distances[tree_i] = 0
@@ -23,14 +23,14 @@ def min_initial_species_tree(gene_trees, n):
     return min(distances, key=distances.get)
 
 
-def random_from_gene_initial_species_tree(gene_trees, n):
+def random_from_gene_initial_species_tree(gene_trees, n): # 1 and 5
     if n == 1:
         return random.sample(gene_trees, n)[0]
     else:
         return random.sample(gene_trees, n)
 
 
-def random_true_initial_species_tree(gene_trees, n):
+def random_true_initial_species_tree(gene_trees, n): # 1 and 5
     if n == 1:
         return randomTree(gene_trees[0].get_leaf_names())
     else:
