@@ -2,7 +2,7 @@ from ete3 import Tree
 import os
 import re
 import random
-from evo.utils import *
+from utils import *
 
 
 def randomTree(labels):
