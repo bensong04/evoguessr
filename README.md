@@ -6,3 +6,4 @@ and test various search paradigms to explore tree space.
 
 We define a new tree rearrangement method we call SubtreeSwap and test against methods mentioned in the paper.
    
+![Alt text]([assets/logo.png](https://github.com/bensong04/evoguessr/blob/8123595176373d94774f9fe132728c5fb5033c90/assets/logo.png))
