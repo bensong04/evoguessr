@@ -1,11 +1,8 @@
-# evoguessr
+# FROGTOAST (FROm Gene-trees TO A Species Tree )
 Heuristic constructing species trees from gene trees
 
-ToDo:
+We implement Symmetric Duplication cost metric defined in: https://epubs.siam.org/doi/10.1137/S0097539798343362 
+and test various search paradigms to explore tree space.
 
-1. compare different methods of searching tree space:
-	  - NNI only, CP only, NNI and CP, maybe another
-2. Compare different methods of initial tree
-
-3. Try genetic algorithm from lecture
+We define a new tree rearrangement method we call SubtreeSwap and test against methods mentioned in the paper.
    
