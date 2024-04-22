@@ -239,12 +239,15 @@ def main():
     initial_cost = sum(symm_duplication_cost(species_tree, gt)
                        for gt in gene_trees)
     print("initial cost", initial_cost)
-    for _ in range(10):
-        tree = randomTree(species_tree.get_leaf_names())
-        for _ in range(8):
-            tree, cost = perform_subtreeSwap(tree, gene_trees)
-            tree, cost = perform_spr(tree, gene_trees)
-            print("Cost:", cost)
+    species_tree.show()
+    for _ in range(8):
+        species_tree, cost = perform_subtreeSwap(species_tree, gene_trees)
+        print("perform_subtreeSwap")
+        species_tree.show()
+        species_tree, cost = perform_spr(species_tree, gene_trees)
+        print("perform_spr")
+        species_tree.show()
+        print("Cost:", cost)
 
 
 if __name__ == "__main__":

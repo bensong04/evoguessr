@@ -1,11 +1,11 @@
-# evoguessr
-Heuristic constructing species trees from gene trees
+# <img src="https://github.com/bensong04/evoguessr/blob/797cb3df13524ad9db971d5004b1033ef5c479a5/assets/logo.png" alt="Alt text for image" title="logo" width="55" height="55"> FROGTOAST (FROm Gene-trees TO A Species Tree ) 
+**Heuristic constructing species trees from gene trees**
 
-ToDo:
-
-1. compare different methods of searching tree space:
-	  - NNI only, CP only, NNI and CP, maybe another
-2. Compare different methods of initial tree
-
-3. Try genetic algorithm from lecture
+ - implemented Symmetric Duplication cost metric defined in:
+   https://epubs.siam.org/doi/10.1137/S0097539798343362
    
+ - tested various search paradigms to explore tree space.
+   
+- defined a new tree rearrangement method we call SubtreeSwap and test against traditional NNI and SRP algorithms
+   
+![Alt text](https://github.com/bensong04/evoguessr/blob/797cb3df13524ad9db971d5004b1033ef5c479a5/assets/plots.png)
