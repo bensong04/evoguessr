@@ -202,12 +202,9 @@ def perform_spr(species_tree, gene_trees):
             parent = node.up  # Save the parent node for reattachment
             node.detach()  # Detach the node
 
-            # Get ancestors to prevent invalid reattachment
-            node_ancestors = node.get_ancestors()
-
             # Try regrafting the detached subtree at every possible point in the tree
             for potential_reattach in temp_tree.traverse("preorder"):
-                if potential_reattach not in node_ancestors and potential_reattach != node and not potential_reattach.is_leaf():
+                if potential_reattach != node and not potential_reattach.is_leaf():
                     # Temporarily reattach the subtree
                     potential_reattach.add_child(node)
                     # Evaluate new tree configuration
@@ -240,13 +237,9 @@ def main():
                        for gt in gene_trees)
     print("initial cost", initial_cost)
     species_tree.show()
-    for _ in range(8):
-        species_tree, cost = perform_subtreeSwap(species_tree, gene_trees)
-        print("perform_subtreeSwap")
-        species_tree.show()
+    for _ in range(10):
+        # species_tree, cost = perform_subtreeSwap(species_tree, gene_trees)
         species_tree, cost = perform_spr(species_tree, gene_trees)
-        print("perform_spr")
-        species_tree.show()
         print("Cost:", cost)
 
 

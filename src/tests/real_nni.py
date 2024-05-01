@@ -3,15 +3,18 @@ import os
 import re
 
 
-def is_internal_node (tree_node): #only nodes whose children are also nonleaves
+def is_internal_node(tree_node):  # only nodes whose children are also nonleaves
     return not tree_node.is_leaf()
-def nni (tree : Tree):
+
+
+def nni(tree: Tree):
     all_nodes = list(tree.traverse())
     nni_trees = list()
     internal_nodes = filter(is_internal_node, all_nodes)
     for A in internal_nodes:
         adj_nodes = A.get_children()
-        adj_internal_nodes = [node for node in adj_nodes if node in internal_nodes]
+        adj_internal_nodes = [
+            node for node in adj_nodes if node in internal_nodes]
         for B in adj_internal_nodes:
             A_children = list(A.get_children())
             A_children.remove(B)
@@ -31,13 +34,17 @@ def nni (tree : Tree):
                     B.add_child(b_child)
 
     return nni_trees
+
+
 def main():
     t = Tree()
     rooted = t.add_child(name="R")
-    rooted.populate(10, names_library=list("abcdefghij"))
+    rooted.populate(10, names_library=["Gorilla_gorilla", "Felis_catus", "Sus_scrofa", "Pan_paniscus",
+                    "Homo_sapiens", "Canis_lupus", "Ailuropoda_melanoleuca", "Ovis_aries", "Bos_taurus", "Gallus_gallus"])
     print("showinging initial")
-    print(rooted.get_ascii(show_internal=True))
+    rooted.show()
     print("showing nni trees")
-    nni (rooted)
-    
+    nni(rooted)
+
+
 main()
